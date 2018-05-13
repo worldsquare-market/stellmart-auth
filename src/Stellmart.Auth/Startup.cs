@@ -25,7 +25,7 @@ namespace Stellmart.Auth
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<StellmartContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(Configuration["ConnectionStrings:DefaultConnection"]));
 
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<StellmartContext>()
