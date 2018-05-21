@@ -27,13 +27,22 @@ namespace Stellmart.Auth
                 .AddEntityFrameworkStores<StellmartContext>()
                 .AddDefaultTokenProviders();
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    builder => builder.WithOrigins(Configuration.GetSection("HostSettings:WebAppClientUrl").Value.ToString())
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+            });
+
             services.AddMvc();
 
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
                 .AddInMemoryIdentityResources(Config.GetIdentityResources())
                 .AddInMemoryApiResources(Config.GetApiResources())
-                .AddInMemoryClients(Config.GetClients())
+                .AddInMemoryClients(Config.GetClients(Configuration.GetSection("HostSettings:WebAppClientUrl").Value.ToString()))
                 .AddAspNetIdentity<IdentityUser>();
         }
 
@@ -49,6 +58,8 @@ namespace Stellmart.Auth
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+
+            app.UseCors("CorsPolicy");
 
             app.UseIdentityServer();
 

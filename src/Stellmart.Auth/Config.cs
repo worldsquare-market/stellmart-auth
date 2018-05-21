@@ -27,7 +27,7 @@ namespace Stellmart.Auth
         }
 
         // clients want to access resources (aka scopes)
-        public static IEnumerable<Client> GetClients()
+        public static IEnumerable<Client> GetClients(string host)
         {
             // client credentials client
             return new List<Client>
@@ -52,9 +52,14 @@ namespace Stellmart.Auth
 
                     ClientSecrets =
                     {
-                        new Secret("secret".Sha256())
+                        new Secret("1a7f0273-b311-4f2d-8d28-e680865e3a24".Sha256())
                     },
-                    AllowedScopes = { "api1" }
+                    AllowedScopes = new List<string>
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "api1"
+                    }
                 },
 
                 // OpenID Connect hybrid flow and client credentials client (MVC)
@@ -69,8 +74,8 @@ namespace Stellmart.Auth
                         new Secret("secret".Sha256())
                     },
 
-                    RedirectUris = { "http://localhost:5002/signin-oidc" },
-                    PostLogoutRedirectUris = { "http://localhost:5002/signout-callback-oidc" },
+                    RedirectUris = { host + "signin-oidc" },
+                    PostLogoutRedirectUris = { host + "signout-callback-oidc" },
 
                     AllowedScopes =
                     {
@@ -89,9 +94,9 @@ namespace Stellmart.Auth
                     AllowedGrantTypes = GrantTypes.Implicit,
                     AllowAccessTokensViaBrowser = true,
 
-                    RedirectUris = { "http://localhost:5003/callback.html" },
-                    PostLogoutRedirectUris = { "http://localhost:5003/index.html" },
-                    AllowedCorsOrigins = { "http://localhost:5003" },
+                    RedirectUris = { host + "callback.html" },
+                    PostLogoutRedirectUris = { host + "index.html" },
+                    AllowedCorsOrigins = { host },
 
                     AllowedScopes =
                     {
