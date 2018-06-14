@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stellmart.Auth.Data
 {
-    public class StellmartContext : IdentityDbContext<IdentityUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, int>
     {
-        public StellmartContext(DbContextOptions<StellmartContext> options)
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
