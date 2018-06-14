@@ -104,6 +104,38 @@ namespace Stellmart.Auth
                         IdentityServerConstants.StandardScopes.Profile,
                         "api1"
                     },
+                },
+                //implicit
+                new Client
+                {
+                    ClientName = "implicitclient",
+                    ClientId = "implicitclient",
+                    AccessTokenType = AccessTokenType.Reference,
+                    AllowedGrantTypes = GrantTypes.Implicit,
+                    AllowAccessTokensViaBrowser = true,
+                    RequireConsent = false,
+                    AlwaysSendClientClaims = true,
+                    AlwaysIncludeUserClaimsInIdToken = true,
+
+                    RedirectUris = new List<string>
+                    {
+                        host
+                    },
+                    PostLogoutRedirectUris = new List<string>
+                    {
+                        host
+                    },
+                    AllowedCorsOrigins = new List<string>
+                    {
+                        host
+                    },
+                    AllowedScopes = new List<string>
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "api1",
+                        "role"
+                    }
                 }
             };
         }
