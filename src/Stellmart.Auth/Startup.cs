@@ -30,8 +30,7 @@ namespace Stellmart.Auth
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy",
-                    builder => builder.WithOrigins(Configuration.GetSection("HostSettings:WebAppClientUrl").Value.ToString())
-                    .AllowAnyMethod()
+                    builder => builder.AllowAnyOrigin().AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials());
             });
