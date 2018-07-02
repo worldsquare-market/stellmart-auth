@@ -103,6 +103,7 @@ namespace Stellmart.Auth.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.Username);
+
                     await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id.ToString(), user.UserName));
 
                     // make sure the returnUrl is still valid, and if so redirect back to authorize endpoint or a local page
@@ -238,7 +239,7 @@ namespace Stellmart.Auth.Controllers
             if (User?.Identity.IsAuthenticated == true)
             {
                 // delete local authentication cookie
-                await _signInManager.SignOutAsync();
+                await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
 
                 // raise the logout event
                 await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
