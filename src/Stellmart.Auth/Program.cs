@@ -28,7 +28,6 @@ namespace Stellmart.Auth
                                     builtConfig["KeyVault:ClientSecret"]);
                             })
                 .UseStartup<Startup>()
-                .UseApplicationInsights()
-                .UseStartup<Startup>();
+                .UseApplicationInsights();
     }
 }
