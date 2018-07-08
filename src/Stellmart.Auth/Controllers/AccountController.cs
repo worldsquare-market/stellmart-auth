@@ -104,7 +104,11 @@ namespace Stellmart.Auth.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.Username);
-                    if (user.TwoFactorTypeId != (int)TwoFactorTypes.None && user.UseTwoFactorForLogin)
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id.ToString(), user.UserName));
+
+                    // make sure the returnUrl is still valid, and if so redirect back to authorize endpoint or a local page
+                    // the IsLocalUrl check is only necessary if you want to support additional local pages, otherwise IsValidReturnUrl is more strict
+                    if (_interaction.IsValidReturnUrl(model.ReturnUrl) || Url.IsLocalUrl(model.ReturnUrl))
                     {
                         return Redirect("~/TwoFactor?returnUrl=" + model.ReturnUrl + "&username=" + model.Username);
                     }
@@ -246,7 +250,7 @@ namespace Stellmart.Auth.Controllers
             if (User?.Identity.IsAuthenticated == true)
             {
                 // delete local authentication cookie
-                await _signInManager.SignOutAsync();
+                await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
 
                 // raise the logout event
                 await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
@@ -549,4 +553,4 @@ namespace Stellmart.Auth.Controllers
         {
         }
     }
-}
+}
