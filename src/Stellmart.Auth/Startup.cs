@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Stellmart.Auth.Data;
+using Stellmart.Auth.Models;
+using Stellmart.Auth.Services;
 
 namespace Stellmart.Auth
 {
@@ -21,7 +23,8 @@ namespace Stellmart.Auth
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration["ConnectionStrings:DefaultConnection"]));
+               //options.UseSqlServer(Configuration["ConnectionStrings:DefaultConnection"]));
+               options.UseSqlServer("Server=localhost\\MSSQLSERVER01;Database=stellmart-dev-db;Trusted_Connection=True;"));
 
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
@@ -43,6 +46,9 @@ namespace Stellmart.Auth
                 .AddInMemoryApiResources(Config.GetApiResources())
                 .AddInMemoryClients(Config.GetClients(Configuration.GetSection("HostSettings:WebAppClientUrl").Value.ToString()))
                 .AddAspNetIdentity<ApplicationUser>();
+
+            services.AddTransient<IEmailService, EmailService>();
+            services.Configure<SendGridSettings>(Configuration.GetSection("SendGrid"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
