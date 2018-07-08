@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Twilio;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;
+using System.Diagnostics;
 
 namespace Stellmart.Auth.Services
 {
@@ -38,7 +39,7 @@ namespace Stellmart.Auth.Services
             }
             catch (Exception e)
             {
-               // Log error
+                Debug.WriteLine(e.Message);
             }
 
             return success;
