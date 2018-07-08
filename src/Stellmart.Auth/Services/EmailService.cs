@@ -8,6 +8,7 @@ using SendGrid;
 using SendGrid.Helpers.Mail;
 using Microsoft.Extensions.Logging;
 using Stellmart.Auth.Configuration;
+using System.Diagnostics;
 
 namespace Stellmart.Auth.Services
 {
@@ -49,8 +50,7 @@ namespace Stellmart.Auth.Services
             }
             catch (Exception e)
             {
-                // Use serilog
-                success = false;
+                Debug.WriteLine(e.Message);
             }
             return success;
         }

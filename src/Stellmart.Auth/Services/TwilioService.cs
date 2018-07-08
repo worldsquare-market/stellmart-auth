@@ -38,7 +38,7 @@ namespace Stellmart.Auth.Services
             }
             catch (Exception e)
             {
-                success = false;
+               // Log error
             }
 
             return success;
