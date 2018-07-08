@@ -16,5 +16,7 @@ namespace Stellmart.Auth.ViewModels
         public string Code { get; set; }
 
         public string DisplayText { get; set; }
+
+        public bool AllowResend { get; set;  }
     }
 }

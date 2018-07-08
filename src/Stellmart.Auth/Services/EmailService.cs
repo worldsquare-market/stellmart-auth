@@ -7,23 +7,26 @@ using System.Threading.Tasks;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using Microsoft.Extensions.Logging;
+using Stellmart.Auth.Configuration;
 
 namespace Stellmart.Auth.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly IOptions<SendGridSettings> _sendGridSettings;
+        private readonly IOptions<SendGridCredentials> _sendGridSettings;
         private readonly string _systemDisplayName = "The WorldSquare Team";
         private readonly string _systemEmail = "info@worldsquare.io";
+        private readonly SendGridClient _client;
 
-        public EmailService(IOptions<SendGridSettings> sendGridSettings)
+        public EmailService(IOptions<SendGridCredentials> sendGridCredentials)
         {
-            _sendGridSettings = sendGridSettings;
+            _sendGridSettings = sendGridCredentials;
+            _client = new SendGridClient(_sendGridSettings.Value.ApiKey);
         }
 
         public async Task<bool> SendEmail(EmailModel email)
         {
-           var client = new SendGridClient(_sendGridSettings.Value.ApiKey);
+           
             var success = false;
             var msg = new SendGridMessage()
             {
@@ -34,7 +37,7 @@ namespace Stellmart.Auth.Services
             msg.AddTo(email.ToAddress, email.ToDisplayName);
             try
             {
-                var response = await client.SendEmailAsync(msg);
+                var response = await _client.SendEmailAsync(msg);
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
                     success = true;

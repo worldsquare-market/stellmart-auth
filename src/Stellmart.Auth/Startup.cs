@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Stellmart.Auth.Configuration;
 using Stellmart.Auth.Data;
-using Stellmart.Auth.Models;
 using Stellmart.Auth.Services;
-
+ 
 namespace Stellmart.Auth
 {
     public class Startup
@@ -48,7 +48,10 @@ namespace Stellmart.Auth
                 .AddAspNetIdentity<ApplicationUser>();
 
             services.AddTransient<IEmailService, EmailService>();
-            services.Configure<SendGridSettings>(Configuration.GetSection("SendGrid"));
+            services.AddTransient<ITwilioService, TwilioService>();
+            services.AddTransient<ITotpService, TotpService>();
+            services.Configure<SendGridCredentials>(Configuration.GetSection("SendGrid"));
+            services.Configure<TwilioCredentials>(Configuration.GetSection("Twilio"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
