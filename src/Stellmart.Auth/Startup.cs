@@ -77,9 +77,6 @@ namespace Stellmart.Auth
                 .AddInMemoryClients(Config.GetClients(Configuration.GetSection("HostSettings:WebAppClientUrl").Value.ToString()))
                 .AddAspNetIdentity<ApplicationUser>();
 
-            services.AddTransient<IEmailService, EmailService>();
-            services.AddTransient<ITwilioService, TwilioService>();
-            services.AddTransient<ITotpService, TotpService>();
             services.Configure<SendGridCredentials>(Configuration.GetSection("SendGrid"));
             services.Configure<TwilioCredentials>(Configuration.GetSection("Twilio"));
         }
