@@ -79,6 +79,10 @@ namespace Stellmart.Auth
 
             services.Configure<SendGridCredentials>(Configuration.GetSection("SendGrid"));
             services.Configure<TwilioCredentials>(Configuration.GetSection("Twilio"));
+
+            services.AddSingleton<IEmailService, EmailService>();
+            services.AddSingleton<ITwilioService, TwilioService>();
+            services.AddSingleton<ITotpService, TotpService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -12,6 +12,7 @@ using Stellmart.Auth.Services;
 using Stellmart.Auth.Models;
 using System.Security.Cryptography;
 using IdentityServer4.Events;
+using System.Security.Claims;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,6 +21,7 @@ namespace Stellmart.Auth.Controllers
     public class TwoFactorController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEventService _events;
         private readonly IEmailService _emailService;
         private readonly ITwilioService _twilioService;
@@ -33,6 +35,7 @@ namespace Stellmart.Auth.Controllers
 
         public TwoFactorController(
             UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signinManager,
             IEventService events,
             IEmailService emailService,
             ITwilioService twilioService,
@@ -41,6 +44,7 @@ namespace Stellmart.Auth.Controllers
             )
         {
             _userManager = userManager;
+            _signInManager = signinManager;
             _events = events;
             _emailService = emailService;
             _twilioService = twilioService;
@@ -52,6 +56,11 @@ namespace Stellmart.Auth.Controllers
         public async Task<IActionResult> Index(string returnUrl, string username)
         {
             var user = await _userManager.FindByNameAsync(username);
+            if (!_signInManager.IsSignedIn(User))
+            {
+                return Redirect("~/Account/Login?returnUrl=" + returnUrl);
+            }
+
             switch (user.TwoFactorTypeId)
             {
                 case (int)TwoFactorTypes.Email:
@@ -76,52 +85,67 @@ namespace Stellmart.Auth.Controllers
         public async Task<IActionResult> Index(TwoFactorAuthenticationViewModel model, string button)
         {
             var user = await _userManager.FindByNameAsync(model.Username);
-            if (button == "submit")
+            if (user.TwoFactorFailedCount > user.MaxTwoFactorFailedAccessAttempts)
             {
-                if (user.TwoFactorTypeId == (int)TwoFactorTypes.Totp)
+                user.TwoFactorFailedCount = 0;
+                await _userManager.UpdateAsync(user);
+                await _userManager.SetLockoutEndDateAsync(user, DateTime.Now.AddMinutes(user.DefaultTwoFatorLockoutMinutes));
+                return Redirect("~/Account/Login?returnUrl=" + model.ReturnUrl + "&isLockedOut=true");
+            }
+            else
+            {
+                if (button == "submit")
                 {
-                    if (_totpService.Validate(user.TotpSecret, model.Code))
+                    if (user.TwoFactorTypeId == (int)TwoFactorTypes.Totp)
                     {
-                        return await Authenticated(user, model);
+                        if (_totpService.Validate(user.TotpSecret, model.Code))
+                        {
+                            return await Authenticated(user, model);
+                        }
+                        else
+                        {
+                            return await AccessDenied(user, model);
+                        }
                     }
                     else
                     {
-                        return await AccessDenied(user, model);
+                        if (model.Code == user.TwoFactorCode)
+                        {
+                            return await Authenticated(user, model);
+                        }
+                        else
+                        {
+                            return await AccessDenied(user, model);
+                        }
                     }
                 }
                 else
                 {
-                    if (model.Code == user.TwoFactorCode)
+                    switch (user.TwoFactorTypeId)
                     {
-                        return await Authenticated(user, model);
+                        case (int)TwoFactorTypes.Email:
+                            await SendCodeToEmail(user);
+                            break;
+                        case (int)TwoFactorTypes.Sms:
+                            await SendSmsCode(user);
+                            break;
                     }
-                    else
-                    {
-                        return await AccessDenied(user, model);
-                    }
+
+                    model.Code = null;
+                    model.DisplayText = GetDisplayText(user);
+                    return View(model);
                 }
-            }
-            else
-            {
-                switch (user.TwoFactorTypeId)
-                {
-                    case (int)TwoFactorTypes.Email:
-                        await SendCodeToEmail(user);
-                        break;
-                    case (int)TwoFactorTypes.Sms:
-                        await SendSmsCode(user);
-                        break;
-                }
-                
-                model.Code = null;
-                model.DisplayText = GetDisplayText(user);
-                return View(model);
             }
         }
 
         private async Task<IActionResult> Authenticated(ApplicationUser user, TwoFactorAuthenticationViewModel model)
         {
-            await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id.ToString(), user.UserName));
+            user.TwoFactorFailedCount = 0;
+            await _userManager.UpdateAsync(user);
+            var claimsIdentity = User.Identities.ElementAt(0);
+            claimsIdentity.AddClaim(
+                new Claim("TwoFactorAuthentication", user.TwoFactorTypeId.ToString())
+                );
             if (_interaction.IsValidReturnUrl(model.ReturnUrl) || Url.IsLocalUrl(model.ReturnUrl))
             {
                 return Redirect(model.ReturnUrl);
@@ -132,7 +156,8 @@ namespace Stellmart.Auth.Controllers
 
         private async Task<IActionResult> AccessDenied(ApplicationUser user, TwoFactorAuthenticationViewModel model)
         {
-            await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid authentication code"));
+            user.TwoFactorFailedCount++;
+            await _userManager.UpdateAsync(user);
             ModelState.AddModelError("Invalid Code", "Invalid Code");
             model.Code = null;
             return View(model);

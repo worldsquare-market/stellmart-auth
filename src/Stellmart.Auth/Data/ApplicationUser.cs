@@ -12,6 +12,12 @@ namespace Stellmart.Auth.Data
 
         public int TwoFactorTypeId { get; set; }
 
+        public int TwoFactorFailedCount { get; set; }
+
+        public int MaxTwoFactorFailedAccessAttempts { get; set; }
+
+        public int DefaultTwoFatorLockoutMinutes { get; set; }
+
         public string FirstName { get; set; }
 
         public string LastName { get; set; }
