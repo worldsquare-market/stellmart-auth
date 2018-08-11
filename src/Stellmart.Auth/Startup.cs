@@ -29,7 +29,7 @@ namespace Stellmart.Auth
             if (Hosting.IsDevelopment())
             {
                 services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=stellmart-dev-db;Trusted_Connection=True;"));
+                    options.UseSqlServer("Server=.;Database=stellmart-dev-db;Trusted_Connection=True;"));
             }
             else
             {
