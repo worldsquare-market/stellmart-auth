@@ -22,6 +22,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
+using Stellmart.Auth.Data.Enumerations;
 
 namespace Stellmart.Auth.Controllers
 {
@@ -55,7 +56,7 @@ namespace Stellmart.Auth.Controllers
         /// Show login page
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Login(string returnUrl)
+        public async Task<IActionResult> Login(string returnUrl, bool isLockedOut = false)
         {
             // build a model so we know what to show on the login page
             var vm = await BuildLoginViewModelAsync(returnUrl);
@@ -64,6 +65,11 @@ namespace Stellmart.Auth.Controllers
             {
                 // we only have one option for logging in and it's an external provider
                 return await ExternalLogin(vm.ExternalLoginScheme, returnUrl);
+            }
+
+            if (isLockedOut)
+            {
+                ModelState.AddModelError("Locked Out", "Maximum number of attempts exceeded");
             }
 
             return View(vm);
@@ -103,8 +109,15 @@ namespace Stellmart.Auth.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.Username);
-
                     await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id.ToString(), user.UserName));
+
+                    // make sure the returnUrl is still valid, and if so redirect back to authorize endpoint or a local page
+                    // the IsLocalUrl check is only necessary if you want to support additional local pages, otherwise IsValidReturnUrl is more strict
+
+                    if (user.UseTwoFactorForLogin)
+                    {
+                        return Redirect("~/TwoFactor?returnUrl=" + model.ReturnUrl + "&username=" + model.Username);
+                    }
 
                     // make sure the returnUrl is still valid, and if so redirect back to authorize endpoint or a local page
                     // the IsLocalUrl check is only necessary if you want to support additional local pages, otherwise IsValidReturnUrl is more strict
@@ -112,13 +125,19 @@ namespace Stellmart.Auth.Controllers
                     {
                         return Redirect(model.ReturnUrl);
                     }
-
                     return Redirect("~/");
                 }
+                else if (result.IsLockedOut)
+                {
+                    ModelState.AddModelError("Locked Out", "Maximum number of attempts exceeded");
+                }
+                else
+                {
+                    ModelState.AddModelError("", AccountOptions.InvalidCredentialsErrorMessage);
+                }
+
 
                 await _events.RaiseAsync(new UserLoginFailureEvent(model.Username, "invalid credentials"));
-
-                ModelState.AddModelError("", AccountOptions.InvalidCredentialsErrorMessage);
             }
 
             // something went wrong, show form with error
@@ -542,4 +561,4 @@ namespace Stellmart.Auth.Controllers
         {
         }
     }
-}
+}

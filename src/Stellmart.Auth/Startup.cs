@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Stellmart.Auth.Configuration;
 using Stellmart.Auth.Data;
+using Stellmart.Auth.Services;
+
 using System;
 
 namespace Stellmart.Auth
@@ -23,16 +26,8 @@ namespace Stellmart.Auth
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            if (Hosting.IsDevelopment())
-            {
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=stellmart-dev-db;Trusted_Connection=True;"));
-            }
-            else
-            {
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseSqlServer(Configuration["ConnectionStrings:DefaultConnection"]));
-            }
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(Configuration["ConnectionStrings:DefaultConnection"]));
 
             services.AddIdentityCore<ApplicationUser>(options => { })
                 .AddRoles<ApplicationRole>()
@@ -73,6 +68,13 @@ namespace Stellmart.Auth
                 .AddInMemoryApiResources(Config.GetApiResources())
                 .AddInMemoryClients(Config.GetClients(Configuration.GetSection("HostSettings:WebAppClientUrl").Value.ToString()))
                 .AddAspNetIdentity<ApplicationUser>();
+
+            services.Configure<SendGridCredentials>(Configuration.GetSection("SendGrid"));
+            services.Configure<TwilioCredentials>(Configuration.GetSection("Twilio"));
+
+            services.AddSingleton<IEmailService, EmailService>();
+            services.AddSingleton<ITwilioService, TwilioService>();
+            services.AddSingleton<ITotpService, TotpService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -80,7 +82,6 @@ namespace Stellmart.Auth
         {
             if (env.IsDevelopment())
             {
-                app.UseBrowserLink();
                 app.UseDeveloperExceptionPage();
             }
             else
