@@ -143,9 +143,17 @@ namespace Stellmart.Auth.Controllers
             user.TwoFactorFailedCount = 0;
             await _userManager.UpdateAsync(user);
             var claimsIdentity = User.Identities.ElementAt(0);
-            claimsIdentity.AddClaim(
-                new Claim("TwoFactorAuthentication", user.TwoFactorTypeId.ToString())
-                );
+            var timeoutClaim = claimsIdentity.Claims.FirstOrDefault(x => x.Type == "TwoFactorAuthTime");
+            if (timeoutClaim != null)
+            {
+                claimsIdentity.RemoveClaim(timeoutClaim);
+            }
+            claimsIdentity.AddClaims(
+                new List<Claim>() {
+                new Claim("TwoFactorAuthentication", user.TwoFactorTypeId.ToString()),
+                new Claim("TwoFactorAuthTime", DateTime.Now.ToString())
+                }
+            );
             if (_interaction.IsValidReturnUrl(model.ReturnUrl) || Url.IsLocalUrl(model.ReturnUrl))
             {
                 return Redirect(model.ReturnUrl);
