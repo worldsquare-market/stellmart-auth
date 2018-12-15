@@ -148,29 +148,12 @@ namespace Stellmart.Auth.Controllers
         private async Task<IActionResult> Authenticated(ApplicationUser user, TwoFactorAuthenticationViewModel model)
         {
             user.TwoFactorFailedCount = 0;
+            user.TwoFactorAuthTime = DateTime.UtcNow;
             await _userManager.UpdateAsync(user);
-            var claimsIdentity = User.Identities.ElementAt(0);
-            var twoFactorClaim = claimsIdentity.Claims.FirstOrDefault(x => x.Type == "two_factor_auth");
-            if (twoFactorClaim != null)
-            {
-                claimsIdentity.RemoveClaim(twoFactorClaim);
-            }
-            var timeoutClaim = claimsIdentity.Claims.FirstOrDefault(x => x.Type == "two_factor_auth_time");
-            if (timeoutClaim != null)
-            {
-                claimsIdentity.RemoveClaim(timeoutClaim);
-            }
-            claimsIdentity.AddClaims(
-                new List<Claim>() {
-                new Claim("two_factor_auth", user.TwoFactorTypeId.ToString()),
-                new Claim("two_factor_auth_time", (Math.Round(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds)).ToString())
-                }
-            );
             if (_interaction.IsValidReturnUrl(BuildReturnUrl(model)) || Url.IsLocalUrl(BuildReturnUrl(model)))
             {
                 return Redirect(BuildReturnUrl(model));
             }
-
             return Redirect("~/");
         }
 

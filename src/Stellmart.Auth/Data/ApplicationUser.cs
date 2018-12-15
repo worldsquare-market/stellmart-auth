@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System;
 
 namespace Stellmart.Auth.Data
 {
@@ -17,6 +18,8 @@ namespace Stellmart.Auth.Data
         public int MaxTwoFactorFailedAccessAttempts { get; set; }
 
         public int DefaultTwoFatorLockoutMinutes { get; set; }
+
+        public DateTime TwoFactorAuthTime { get; set; }
 
         public string FirstName { get; set; }
 

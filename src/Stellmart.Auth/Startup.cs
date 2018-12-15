@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using IdentityServer4.Services;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +76,7 @@ namespace Stellmart.Auth
             services.AddSingleton<IEmailService, EmailService>();
             services.AddSingleton<ITwilioService, TwilioService>();
             services.AddSingleton<ITotpService, TotpService>();
+            services.AddTransient<IProfileService, ClaimsProfileService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
