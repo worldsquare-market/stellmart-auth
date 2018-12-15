@@ -13,6 +13,7 @@ using Stellmart.Auth.Models;
 using System.Security.Cryptography;
 using IdentityServer4.Events;
 using System.Security.Claims;
+using System.Net;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -53,12 +54,24 @@ namespace Stellmart.Auth.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string returnUrl, string username)
+        public async Task<IActionResult> Index(string redirectUri, string clientId, string scope,
+            string nonce, string state, string username)
         {
             var user = await _userManager.FindByNameAsync(username);
+            var vm = new TwoFactorAuthenticationViewModel()
+            {
+                RedirectUri = redirectUri,
+                ClientId = clientId,
+                Scope = scope,
+                Nonce = nonce,
+                State = state,
+                Username = username,
+                DisplayText = GetDisplayText(user),
+                AllowResend = user.TwoFactorTypeId != (int)TwoFactorTypes.Totp
+            };
             if (!_signInManager.IsSignedIn(User))
             {
-                return Redirect("~/Account/Login?returnUrl=" + returnUrl);
+                return Redirect("~/Account/Login?returnUrl=" + BuildReturnUrl(vm));
             }
 
             switch (user.TwoFactorTypeId)
@@ -70,13 +83,7 @@ namespace Stellmart.Auth.Controllers
                     await SendSmsCode(user);
                     break;
             }
-            var vm = new TwoFactorAuthenticationViewModel()
-            {
-                ReturnUrl = returnUrl,
-                Username = username,
-                DisplayText = GetDisplayText(user),
-                AllowResend = user.TwoFactorTypeId != (int)TwoFactorTypes.Totp
-        };
+  
             return View(vm);
         }
 
@@ -90,7 +97,7 @@ namespace Stellmart.Auth.Controllers
                 user.TwoFactorFailedCount = 0;
                 await _userManager.UpdateAsync(user);
                 await _userManager.SetLockoutEndDateAsync(user, DateTime.Now.AddMinutes(user.DefaultTwoFatorLockoutMinutes));
-                return Redirect("~/Account/Login?returnUrl=" + model.ReturnUrl + "&isLockedOut=true");
+                return Redirect("~/Account/Login?returnUrl=" + BuildReturnUrl(model) + "&isLockedOut=true");
             }
             else
             {
@@ -143,20 +150,25 @@ namespace Stellmart.Auth.Controllers
             user.TwoFactorFailedCount = 0;
             await _userManager.UpdateAsync(user);
             var claimsIdentity = User.Identities.ElementAt(0);
-            var timeoutClaim = claimsIdentity.Claims.FirstOrDefault(x => x.Type == "TwoFactorAuthTime");
+            var twoFactorClaim = claimsIdentity.Claims.FirstOrDefault(x => x.Type == "two_factor_auth");
+            if (twoFactorClaim != null)
+            {
+                claimsIdentity.RemoveClaim(twoFactorClaim);
+            }
+            var timeoutClaim = claimsIdentity.Claims.FirstOrDefault(x => x.Type == "two_factor_auth_time");
             if (timeoutClaim != null)
             {
                 claimsIdentity.RemoveClaim(timeoutClaim);
             }
             claimsIdentity.AddClaims(
                 new List<Claim>() {
-                new Claim("TwoFactorAuthentication", user.TwoFactorTypeId.ToString()),
-                new Claim("TwoFactorAuthTime", DateTime.Now.ToString())
+                new Claim("two_factor_auth", user.TwoFactorTypeId.ToString()),
+                new Claim("two_factor_auth_time", (Math.Round(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds)).ToString())
                 }
             );
-            if (_interaction.IsValidReturnUrl(model.ReturnUrl) || Url.IsLocalUrl(model.ReturnUrl))
+            if (_interaction.IsValidReturnUrl(BuildReturnUrl(model)) || Url.IsLocalUrl(BuildReturnUrl(model)))
             {
-                return Redirect(model.ReturnUrl);
+                return Redirect(BuildReturnUrl(model));
             }
 
             return Redirect("~/");
@@ -222,6 +234,14 @@ namespace Stellmart.Auth.Controllers
                 default:
                     return _emailDisplayText;
             }
+        }
+
+        private string BuildReturnUrl(TwoFactorAuthenticationViewModel model)
+        {
+            var s =  "/connect/authorize/callback?response_type=id_token%20token&client_id=" + WebUtility.UrlEncode(model.ClientId) +
+                "&redirect_uri=" + WebUtility.UrlEncode(model.RedirectUri) + "&scope=" + WebUtility.UrlEncode(model.Scope) +
+                "&nonce=" + WebUtility.UrlEncode(model.Nonce) + "&state=" + WebUtility.UrlEncode(model.State);
+            return s;
         }
     }
 }

@@ -17,12 +17,14 @@ using Stellmart.Auth.Filters;
 using Stellmart.Auth.Models;
 using Stellmart.Auth.ViewModels;
 using System;
+using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using Stellmart.Auth.Data.Enumerations;
+using System.Web;
 
 namespace Stellmart.Auth.Controllers
 {
@@ -116,7 +118,16 @@ namespace Stellmart.Auth.Controllers
 
                     if (user.UseTwoFactorForLogin)
                     {
-                        return Redirect("~/TwoFactor?returnUrl=" + model.ReturnUrl + "&username=" + model.Username);
+                        var queryStrings = HttpUtility.ParseQueryString(model.ReturnUrl);
+                        var clientId = queryStrings["client_id"];
+                        var redirectUri = queryStrings["redirect_uri"];
+                        var scope = queryStrings["scope"];
+                        var nonce = queryStrings["nonce"];
+                        var state = queryStrings["state"];
+                        var param = "~/TwoFactor?redirectUri=" + redirectUri + "&clientId="
+                            + clientId + "&scope=" + scope + "&nonce=" + nonce + "&state=" + state
+                            + "&username=" + model.Username;
+                        return Redirect(param);
                     }
 
                     // make sure the returnUrl is still valid, and if so redirect back to authorize endpoint or a local page

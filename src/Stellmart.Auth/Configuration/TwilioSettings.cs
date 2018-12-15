@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Stellmart.Auth.Configuration
 {
-    public class TwilioCredentials
+    public class TwilioSettings
     {
         public string Sid { get; set; }
 

@@ -13,12 +13,12 @@ namespace Stellmart.Auth.Services
 {
     public class TwilioService : ITwilioService
     {
-        private readonly IOptions<TwilioCredentials> _twilioCredentials;
+        private readonly IOptions<TwilioSettings> _TwilioSettings;
 
-        public TwilioService(IOptions<TwilioCredentials> twilioCeredentials)
+        public TwilioService(IOptions<TwilioSettings> twilioCeredentials)
         {
-            _twilioCredentials = twilioCeredentials;
-            TwilioClient.Init(_twilioCredentials.Value.Sid, _twilioCredentials.Value.AuthToken);
+            _TwilioSettings = twilioCeredentials;
+            TwilioClient.Init(_TwilioSettings.Value.Sid, _TwilioSettings.Value.AuthToken);
         }
 
         public async Task<bool> SendSms(string toPhoneNumber, string message, string fromPhoneNumber = null)
@@ -28,7 +28,7 @@ namespace Stellmart.Auth.Services
             {
                 var text = await MessageResource.CreateAsync(
                     body: message,
-                    from: new Twilio.Types.PhoneNumber(fromPhoneNumber ?? _twilioCredentials.Value.PhoneNumber),
+                    from: new Twilio.Types.PhoneNumber(fromPhoneNumber ?? _TwilioSettings.Value.PhoneNumber),
                     to: new Twilio.Types.PhoneNumber(toPhoneNumber)
                 );
                 if (text.Status != MessageResource.StatusEnum.Failed &&

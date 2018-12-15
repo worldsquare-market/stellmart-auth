@@ -14,14 +14,14 @@ namespace Stellmart.Auth.Services
 {
     public class EmailService : IEmailService
     {
-        private readonly IOptions<SendGridCredentials> _sendGridSettings;
+        private readonly IOptions<SendGridSettings> _sendGridSettings;
         private readonly string _systemDisplayName = "The WorldSquare Team";
         private readonly string _systemEmail = "info@worldsquare.io";
         private readonly SendGridClient _client;
 
-        public EmailService(IOptions<SendGridCredentials> sendGridCredentials)
+        public EmailService(IOptions<SendGridSettings> SendGridSettings)
         {
-            _sendGridSettings = sendGridCredentials;
+            _sendGridSettings = SendGridSettings;
             _client = new SendGridClient(_sendGridSettings.Value.ApiKey);
         }
 

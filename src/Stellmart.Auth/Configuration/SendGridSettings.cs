@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Stellmart.Auth.Configuration
 {
-    public class SendGridCredentials
+    public class SendGridSettings
     {
         public string Username { get; set; }
 
