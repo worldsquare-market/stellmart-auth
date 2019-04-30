@@ -67,14 +67,14 @@ namespace Stellmart.Auth.Controllers
                 State = state,
                 Username = username,
                 DisplayText = GetDisplayText(user),
-                AllowResend = user.TwoFactorTypeId != (int)TwoFactorTypes.Totp
+                AllowResend = user.TwoFactorId != (int)TwoFactorTypes.Totp
             };
             if (!_signInManager.IsSignedIn(User))
             {
                 return Redirect("~/Account/Login?returnUrl=" + BuildReturnUrl(vm));
             }
 
-            switch (user.TwoFactorTypeId)
+            switch (user.TwoFactorId)
             {
                 case (int)TwoFactorTypes.Email:
                     await SendCodeToEmail(user);
@@ -103,7 +103,7 @@ namespace Stellmart.Auth.Controllers
             {
                 if (button == "submit")
                 {
-                    if (user.TwoFactorTypeId == (int)TwoFactorTypes.Totp)
+                    if (user.TwoFactorId == (int)TwoFactorTypes.Totp)
                     {
                         if (_totpService.Validate(user.TotpSecret, model.Code))
                         {
@@ -128,7 +128,7 @@ namespace Stellmart.Auth.Controllers
                 }
                 else
                 {
-                    switch (user.TwoFactorTypeId)
+                    switch (user.TwoFactorId)
                     {
                         case (int)TwoFactorTypes.Email:
                             await SendCodeToEmail(user);
@@ -206,7 +206,7 @@ namespace Stellmart.Auth.Controllers
 
         private string GetDisplayText(ApplicationUser user)
         {
-            switch (user.TwoFactorTypeId)
+            switch (user.TwoFactorId)
             {
                 case (int)TwoFactorTypes.Email:
                     return _emailDisplayText;

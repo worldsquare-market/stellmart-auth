@@ -35,7 +35,7 @@ namespace Stellmart.Auth
                 // resource owner password grant client
                 new Client
                 {
-                    ClientId = "ro.client",
+                    ClientId = "explicitclient",
                     AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
 
                     ClientSecrets =

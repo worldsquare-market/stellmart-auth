@@ -11,7 +11,7 @@ namespace Stellmart.Auth.Data
 
         public string TwoFactorCode { get; set; }
 
-        public int TwoFactorTypeId { get; set; }
+        public int TwoFactorId { get; set; }
 
         public int TwoFactorFailedCount { get; set; }
 

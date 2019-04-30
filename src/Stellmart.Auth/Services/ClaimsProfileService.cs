@@ -34,7 +34,7 @@ namespace Stellmart.Auth.Services
             {
                 claims.Remove(typeClaim);
             }
-            claims.Add(new Claim("2fa_type", user.TwoFactorTypeId.ToString()));
+            claims.Add(new Claim("2fa_type", user.TwoFactorId.ToString()));
 
             var timeClaim = claims.Where(c => c.Value == "2fa_time").FirstOrDefault();
             if (timeClaim != null)
